@@ -24,7 +24,7 @@ function SortHeader({ label, sortKey, activeKey, dir, onClick }) {
   );
 }
 
-export default function JobTable({ jobs, onSelect, onApprove, onReject }) {
+export default function JobTable({ jobs, onSelect, onApprove, onReject, onManualStatus }) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortKey, setSortKey] = useState('updated_at');
   const [sortDir, setSortDir] = useState('desc');
@@ -79,6 +79,7 @@ export default function JobTable({ jobs, onSelect, onApprove, onReject }) {
           <table>
             <thead>
               <tr>
+                <th>#</th>
                 <SortHeader label="Company" sortKey="company" activeKey={sortKey} dir={sortDir} onClick={() => toggleSort('company')} />
                 <SortHeader label="Role" sortKey="role" activeKey={sortKey} dir={sortDir} onClick={() => toggleSort('role')} />
                 <SortHeader label="Score" sortKey="match_score" activeKey={sortKey} dir={sortDir} onClick={() => toggleSort('match_score')} />
@@ -89,8 +90,9 @@ export default function JobTable({ jobs, onSelect, onApprove, onReject }) {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((job) => (
+              {filtered.map((job, index) => (
                 <tr key={job.id} onClick={() => onSelect(job)}>
+                  <td className="muted">{index + 1}</td>
                   <td className="ellipsis" title={job.company}>
                     {job.company}
                   </td>
@@ -123,6 +125,15 @@ export default function JobTable({ jobs, onSelect, onApprove, onReject }) {
                             Reject
                           </button>
                         </>
+                      )}
+                      {(job.status === 'pending' || job.status === 'approved') && (
+                        <button
+                          className="small"
+                          onClick={() => onManualStatus(job.id, 'applied')}
+                          title="Already applied by hand outside the bot? Flag it here."
+                        >
+                          Mark applied
+                        </button>
                       )}
                     </div>
                   </td>

@@ -9,11 +9,13 @@ const dev = !process.argv.includes('--prod');
 const port = process.env.PORT || 3000;
 const projectRoot = path.join(__dirname, '..');
 const runnerPath = path.join(projectRoot, 'src', 'runner', 'run.js');
+const recheckPath = path.join(projectRoot, 'src', 'runner', 'recheck.js');
 
 const app = next({ dev, dir: __dirname });
 const handle = app.getRequestHandler();
 
 let currentChild = null;
+let currentChildKind = null;
 const wsClients = new Set();
 
 function broadcast(event) {
@@ -23,11 +25,15 @@ function broadcast(event) {
   }
 }
 
-function startRun() {
+// Both the search+apply runner and the status recheck drive the same
+// Playwright session/browser profile, so only one may run at a time - this
+// is shared by startRun() and startRecheck() below.
+function spawnChild(kind, scriptPath, args = []) {
   if (currentChild) return { started: false, error: 'A run is already in progress' };
 
-  currentChild = spawn(process.execPath, [runnerPath], { cwd: projectRoot });
-  broadcast({ type: 'run_process_started', pid: currentChild.pid });
+  currentChild = spawn(process.execPath, [scriptPath, ...args], { cwd: projectRoot });
+  currentChildKind = kind;
+  broadcast({ type: 'run_process_started', pid: currentChild.pid, kind });
 
   let buffer = '';
   currentChild.stdout.on('data', (chunk) => {
@@ -48,11 +54,21 @@ function startRun() {
     broadcast({ type: 'log', level: 'error', message: chunk.toString() });
   });
   currentChild.on('exit', (code) => {
-    broadcast({ type: 'run_process_exited', code });
+    broadcast({ type: 'run_process_exited', code, kind });
     currentChild = null;
+    currentChildKind = null;
   });
 
   return { started: true, pid: currentChild.pid };
+}
+
+function startRun() {
+  return spawnChild('run', runnerPath);
+}
+
+function startRecheck(ids) {
+  const args = Array.isArray(ids) && ids.length ? [`--ids=${ids.join(',')}`] : [];
+  return spawnChild('recheck', recheckPath, args);
 }
 
 function stopRun() {
@@ -66,10 +82,31 @@ function sendJson(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
+function readJsonBody(req) {
+  return new Promise((resolve) => {
+    let data = '';
+    req.on('data', (chunk) => {
+      data += chunk;
+    });
+    req.on('end', () => {
+      try {
+        resolve(data ? JSON.parse(data) : {});
+      } catch {
+        resolve({});
+      }
+    });
+  });
+}
+
 app.prepare().then(() => {
   const server = createServer(async (req, res) => {
     if (req.url === '/api/run' && req.method === 'POST') {
       const result = startRun();
+      return sendJson(res, result.started ? 200 : 409, result);
+    }
+    if (req.url === '/api/recheck' && req.method === 'POST') {
+      const body = await readJsonBody(req);
+      const result = startRecheck(body.ids);
       return sendJson(res, result.started ? 200 : 409, result);
     }
     if (req.url === '/api/stop' && req.method === 'POST') {
@@ -77,7 +114,11 @@ app.prepare().then(() => {
       return sendJson(res, result.stopped ? 200 : 404, result);
     }
     if (req.url === '/api/run-status' && req.method === 'GET') {
-      return sendJson(res, 200, { running: Boolean(currentChild), pid: currentChild ? currentChild.pid : null });
+      return sendJson(res, 200, {
+        running: Boolean(currentChild),
+        pid: currentChild ? currentChild.pid : null,
+        kind: currentChildKind,
+      });
     }
     if (req.url.startsWith('/api/')) {
       const handled = await handleApi(req, res);

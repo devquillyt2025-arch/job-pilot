@@ -1,11 +1,7 @@
 {
   "searchQueries": [
-    { "keywords": "node.js developer", "location": "bangalore" },
-    { "keywords": "backend developer", "location": "bangalore" },
-    { "keywords": "automation engineer", "location": "bangalore" },
     { "keywords": "rpa developer", "location": "bangalore" },
-    { "keywords": "ai engineer", "location": "bangalore" },
-    { "keywords": "machine learning engineer", "location": "bangalore" }
+    { "keywords": "ai engineer", "location": "bangalore" }
   ],
   "experienceYears": 3,
   "mustHaveSkills": [

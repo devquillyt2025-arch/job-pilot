@@ -28,6 +28,7 @@ export default function Page() {
 
   const [running, setRunning] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [rechecking, setRechecking] = useState(false);
   const [phase, setPhase] = useState(null);
   const [currentJob, setCurrentJob] = useState(null);
   const [progress, setProgress] = useState(null);
@@ -67,9 +68,10 @@ export default function Page() {
         case 'run_process_started':
           setRunning(true);
           setStarting(false);
+          setRechecking(false);
           setStartedAt(Date.now());
           setLog([]);
-          pushLog('Run started');
+          pushLog(event.kind === 'recheck' ? 'Recheck started' : 'Run started');
           break;
         case 'phase':
           setPhase(event.phase);
@@ -107,6 +109,19 @@ export default function Page() {
           break;
         case 'apply_finished':
           pushLog(`Apply done: ${JSON.stringify(event.counts)}`);
+          break;
+        case 'recheck_progress':
+          setCurrentJob(event.job);
+          setProgress({ index: event.index, total: event.total });
+          pushLog(`Rechecking (${event.index}/${event.total}): ${event.job.role} — ${event.job.company}`);
+          break;
+        case 'recheck_result':
+          setJobs((j) => upsertJob(j, event.job));
+          pushLog(`Recheck: ${event.job.role} → ${event.outcome}${event.reason ? ` (${event.reason})` : ''}`);
+          break;
+        case 'recheck_finished':
+          pushLog(`Recheck done: ${JSON.stringify(event.counts)}`);
+          refreshAll();
           break;
         case 'run_finished':
           pushLog('Run finished');
@@ -151,6 +166,16 @@ export default function Page() {
     }
   }
 
+  async function handleRecheck() {
+    setRechecking(true);
+    try {
+      await api.startRecheck();
+    } catch (err) {
+      pushLog(`Failed to start recheck: ${err.message}`, 'error');
+      setRechecking(false);
+    }
+  }
+
   async function handleApprove(id) {
     const job = await api.patchJob(id, { status: 'approved' });
     setJobs((j) => upsertJob(j, job));
@@ -159,6 +184,12 @@ export default function Page() {
 
   async function handleReject(id) {
     const job = await api.patchJob(id, { status: 'rejected' });
+    setJobs((j) => upsertJob(j, job));
+    api.stats().then(setStats);
+  }
+
+  async function handleManualStatus(id, status) {
+    const job = await api.patchJob(id, { status });
     setJobs((j) => upsertJob(j, job));
     api.stats().then(setStats);
   }
@@ -172,7 +203,15 @@ export default function Page() {
           <h1>Auto-Job — Naukri Dashboard</h1>
           <div className="sub">Finds matching jobs and applies to the ones you approve. Nothing applies without your review first.</div>
         </div>
-        <RunControl connected={connected} running={running} starting={starting} onStart={handleStart} onStop={handleStop} />
+        <RunControl
+          connected={connected}
+          running={running}
+          starting={starting}
+          onStart={handleStart}
+          onStop={handleStop}
+          rechecking={rechecking}
+          onRecheck={handleRecheck}
+        />
       </div>
 
       <StatusStrip running={running} phase={phase} currentJob={currentJob} progress={progress} startedAt={startedAt} now={now} />
@@ -188,7 +227,13 @@ export default function Page() {
           </button>
         </div>
       )}
-      <JobTable jobs={visibleJobs} onSelect={setSelectedJob} onApprove={handleApprove} onReject={handleReject} />
+      <JobTable
+        jobs={visibleJobs}
+        onSelect={setSelectedJob}
+        onApprove={handleApprove}
+        onReject={handleReject}
+        onManualStatus={handleManualStatus}
+      />
       <RunHistory runs={runs} onViewJobs={setRunFilter} />
 
       <DetailDrawer job={selectedJob} onClose={() => setSelectedJob(null)} />

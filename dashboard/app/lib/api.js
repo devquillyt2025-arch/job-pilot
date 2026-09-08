@@ -22,6 +22,7 @@ export const api = {
   runs: () => request('/api/runs'),
   runStatus: () => request('/api/run-status'),
   startRun: () => request('/api/run', { method: 'POST' }),
+  startRecheck: (ids) => request('/api/recheck', { method: 'POST', body: JSON.stringify({ ids }) }),
   stopRun: () => request('/api/stop', { method: 'POST' }),
   captureUrl: (file) => `/api/capture?file=${encodeURIComponent(file)}`,
 };

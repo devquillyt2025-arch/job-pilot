@@ -1,6 +1,6 @@
 'use client';
 
-export default function RunControl({ connected, running, onStart, onStop, starting }) {
+export default function RunControl({ connected, running, onStart, onStop, starting, onRecheck, rechecking }) {
   return (
     <div className="controls">
       <span className="status-strip">
@@ -14,9 +14,18 @@ export default function RunControl({ connected, running, onStart, onStop, starti
           Stop
         </button>
       ) : (
-        <button className="primary" onClick={onStart} disabled={starting || !connected}>
-          {starting ? 'Starting…' : 'Run'}
-        </button>
+        <>
+          <button className="primary" onClick={onStart} disabled={starting || !connected}>
+            {starting ? 'Starting…' : 'Run'}
+          </button>
+          <button
+            onClick={onRecheck}
+            disabled={rechecking || !connected}
+            title="Revisit non-final jobs on Naukri to catch ones applied to manually"
+          >
+            {rechecking ? 'Rechecking…' : 'Recheck status'}
+          </button>
+        </>
       )}
     </div>
   );
