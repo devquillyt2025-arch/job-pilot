@@ -1,0 +1,45 @@
+{
+  "searchQueries": [
+    { "keywords": "node.js developer", "location": "bangalore" },
+    { "keywords": "backend developer", "location": "bangalore" },
+    { "keywords": "automation engineer", "location": "bangalore" },
+    { "keywords": "rpa developer", "location": "bangalore" },
+    { "keywords": "ai engineer", "location": "bangalore" },
+    { "keywords": "machine learning engineer", "location": "bangalore" }
+  ],
+  "experienceYears": 3,
+  "mustHaveSkills": [
+    "Node.js",
+    "JavaScript",
+    "Python",
+    "Automation",
+    "RPA",
+    "Selenium",
+    "Playwright",
+    "Machine Learning",
+    "Artificial Intelligence",
+    "LLM"
+  ],
+  "niceToHaveSkills": [
+    "React",
+    "TypeScript",
+    "AWS",
+    "Docker",
+    "MongoDB",
+    "SQL",
+    "UiPath",
+    "LangChain",
+    "OpenAI",
+    "PyTorch",
+    "TensorFlow",
+    "Generative AI",
+    "Prompt Engineering",
+    "RAG",
+    "Data Science",
+    "Pandas"
+  ],
+  "excludeKeywords": ["walk-in", "walkin", "internship", "unpaid"],
+  "excludeCompanies": [],
+  "minMatchScore": 55,
+  "maxPagesPerQuery": 2
+}

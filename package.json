@@ -1,0 +1,22 @@
+{
+  "name": "auto-job",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "login": "node src/cli/login.js",
+    "migrate": "node src/store/migrate.js",
+    "run": "node src/runner/run.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "fuse.js": "^7.5.0",
+    "lowdb": "^7.0.1",
+    "playwright": "^1.63.0",
+    "ws": "^8.21.3"
+  }
+}

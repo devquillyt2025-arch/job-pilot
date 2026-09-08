@@ -1,0 +1,35 @@
+{
+  "_comment": "Editable at runtime by the dashboard's self-healing flow. Verified live where noted; 'chatbot' entries are best-effort placeholders (screening chatbots sit behind login and couldn't be safely triggered to inspect) - the first real needs_review capture will show the real DOM so these can be corrected without touching code.",
+
+  "login": {
+    "email": "#usernameField",
+    "password": "#passwordField"
+  },
+
+  "search": {
+    "jobCard": "div.srp-jobtuple-wrapper",
+    "jobIdAttr": "data-job-id",
+    "title": "a.title",
+    "company": "a.comp-name",
+    "experience": ".exp-wrap .expwdth",
+    "location": ".loc-wrap .locWdth",
+    "description": ".job-desc",
+    "skillTags": "ul.tags-gt li.tag-li",
+    "postedDay": ".job-post-day"
+  },
+
+  "detail": {
+    "naukriApplyButton": "#apply-button",
+    "externalApplyButton": "#company-site-button",
+    "appliedIndicatorText": "Applied"
+  },
+
+  "chatbot": {
+    "_comment": "Placeholders - not yet verified live. Patch via the dashboard once a real capture lands in needs_review.",
+    "container": "[class*='chatbot' i], [class*='drawer' i][class*='content' i]",
+    "questionText": "[class*='question' i], [class*='botMsg' i], [class*='msg-text' i]",
+    "optionButtons": "[class*='option' i] button, [class*='chip' i]",
+    "textInput": "textarea, input[type='text']",
+    "submitButton": "button:has-text('Submit'), button:has-text('Send')"
+  }
+}

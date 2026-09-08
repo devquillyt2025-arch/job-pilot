@@ -1,0 +1,15 @@
+{
+  "_comment": "Answers are intentionally blank - these get submitted to real employers as fact, so nothing here is auto-filled with a guess. Fill in your real answers below (or resolve questions from the dashboard as they come up, which writes back here automatically) before relying on auto-fill. An entry with an empty answer is treated as unresolved and routed to needs_review, never submitted blank or guessed.",
+  "entries": [
+    { "id": "notice-period", "question": "What is your notice period?", "answer": "" },
+    { "id": "current-ctc", "question": "What is your current CTC?", "answer": "" },
+    { "id": "expected-ctc", "question": "What is your expected CTC?", "answer": "" },
+    { "id": "total-experience", "question": "What is your total experience?", "answer": "" },
+    { "id": "relevant-experience", "question": "What is your relevant experience?", "answer": "" },
+    { "id": "current-location", "question": "What is your current location?", "answer": "" },
+    { "id": "willing-to-relocate", "question": "Are you willing to relocate?", "answer": "" },
+    { "id": "reason-for-change", "question": "What is your reason for job change?", "answer": "" },
+    { "id": "immediate-joiner", "question": "Are you an immediate joiner?", "answer": "" },
+    { "id": "work-mode-preference", "question": "What is your preferred work mode?", "answer": "" }
+  ]
+}

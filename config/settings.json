@@ -1,0 +1,9 @@
+{
+  "offscreenWindow": true,
+  "minActionDelayMs": 3000,
+  "maxActionDelayMs": 8000,
+  "minApplyDelayMs": 30000,
+  "maxApplyDelayMs": 90000,
+  "maxApplicationsPerRun": 15,
+  "maxNewJobsPerSearchRun": 60
+}
