@@ -34,7 +34,8 @@ export default function StatsPanel({ stats }) {
 
       {trend && trend.length > 0 && (
         <>
-          <h2 style={{ marginTop: 18 }}>Success rate by run</h2>
+          <h2 className="subhead">Success rate by run</h2>
+          <div className="table-scroll">
           <table>
             <thead>
               <tr>
@@ -60,6 +61,7 @@ export default function StatsPanel({ stats }) {
                 ))}
             </tbody>
           </table>
+          </div>
         </>
       )}
     </div>

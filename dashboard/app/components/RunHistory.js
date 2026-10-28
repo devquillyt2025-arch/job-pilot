@@ -9,8 +9,8 @@ function formatDuration(startedAt, finishedAt) {
   return `${m}m ${s}s`;
 }
 
-export default function RunHistory({ runs, onViewJobs }) {
-  const [open, setOpen] = useState(false);
+export default function RunHistory({ runs, onViewJobs, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen);
 
   return (
     <div className="card">

@@ -141,6 +141,12 @@ async function getSelectorsHandler(req, res) {
   sendJson(res, 200, loadSelectors());
 }
 
+async function getProfileHandler(req, res) {
+  // Read fresh from disk (not the cached require) so edits show without a restart.
+  const file = path.join(__dirname, '..', '..', 'config', 'profile.json');
+  sendJson(res, 200, JSON.parse(fs.readFileSync(file, 'utf8')));
+}
+
 async function putSelectorsHandler(req, res) {
   const body = await readBody(req);
   fs.writeFileSync(paths.selectorsFile, JSON.stringify(body, null, 2));
@@ -180,6 +186,7 @@ const routes = [
   { method: 'PUT', pattern: /^\/api\/qa-bank$/, handler: (req, res) => putQaBankHandler(req, res) },
   { method: 'GET', pattern: /^\/api\/selectors$/, handler: (req, res) => getSelectorsHandler(req, res) },
   { method: 'PUT', pattern: /^\/api\/selectors$/, handler: (req, res) => putSelectorsHandler(req, res) },
+  { method: 'GET', pattern: /^\/api\/profile$/, handler: (req, res) => getProfileHandler(req, res) },
   { method: 'GET', pattern: /^\/api\/runs$/, handler: (req, res) => listRunsHandler(req, res) },
   { method: 'GET', pattern: /^\/api\/stats$/, handler: (req, res) => statsHandler(req, res) },
   { method: 'GET', pattern: /^\/api\/capture$/, handler: (req, res, m, q) => screenshotHandler(req, res, q) },

@@ -13,6 +13,7 @@
     "company": "a.comp-name",
     "experience": ".exp-wrap .expwdth",
     "location": ".loc-wrap .locWdth",
+    "salary": ".sal-wrap",
     "description": ".job-desc",
     "skillTags": "ul.tags-gt li.tag-li",
     "postedDay": ".job-post-day"

@@ -1,12 +1,41 @@
 const { slugify } = require('./slugify');
 const { randomDelay } = require('../util/delay');
-const { settings, loadSelectors } = require('../config');
+const { settings, profile, loadSelectors } = require('../config');
+
+// Naukri's own SRP filter values (the same params its filter sidebar sets).
+const WFH_TYPES = { office: '0', remote: '2', hybrid: '3' };
+const CTC_BUCKETS = [
+  { min: 0, param: '0to3' },
+  { min: 3, param: '3to6' },
+  { min: 6, param: '6to10' },
+  { min: 10, param: '10to15' },
+  { min: 15, param: '15to25' },
+  { min: 25, param: '25to50' },
+  { min: 50, param: '50to75' },
+  { min: 75, param: '75to100' },
+];
+
+function buildFilterParams() {
+  const params = new URLSearchParams();
+  for (const mode of profile.workModes || []) {
+    const value = WFH_TYPES[String(mode).toLowerCase()];
+    if (value) params.append('wfhType', value);
+  }
+  if (typeof profile.minSalaryLakhs === 'number' && profile.minSalaryLakhs > 0) {
+    for (const bucket of CTC_BUCKETS) {
+      if (bucket.min >= profile.minSalaryLakhs) params.append('ctcFilter', bucket.param);
+    }
+  }
+  return params.toString();
+}
 
 function buildSearchUrl({ keywords, location }, pageNumber) {
   const base = location
     ? `https://www.naukri.com/${slugify(keywords)}-jobs-in-${slugify(location)}`
     : `https://www.naukri.com/${slugify(keywords)}-jobs`;
-  return pageNumber > 1 ? `${base}-${pageNumber}` : base;
+  const path = pageNumber > 1 ? `${base}-${pageNumber}` : base;
+  const query = buildFilterParams();
+  return query ? `${path}?${query}` : path;
 }
 
 async function scrapeCurrentPage(page) {
@@ -25,6 +54,7 @@ async function scrapeCurrentPage(page) {
           company: text(card.querySelector(sel.company)),
           experience: text(card.querySelector(sel.experience)),
           location: text(card.querySelector(sel.location)),
+          salary: sel.salary ? text(card.querySelector(sel.salary)) : '',
           description: text(card.querySelector(sel.description)),
           skills: skillEls.map((el) => el.textContent.trim()),
           postedDay: text(card.querySelector(sel.postedDay)),

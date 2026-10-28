@@ -45,6 +45,7 @@ async function upsertPendingJob(job, scoreInfo, runId) {
     company: job.company,
     location: job.location,
     experience: job.experience,
+    salary: job.salary || null,
     skills: job.skills,
     postedDay: job.postedDay,
     match_score: scoreInfo.score,
@@ -88,8 +89,27 @@ async function setStatus(id, status, extra = {}) {
   return updateJob(id, { status, ...extra });
 }
 
+// Only one run/recheck process exists at a time (the dashboard enforces it),
+// so anything still marked in-progress at startup was left behind by a run
+// that was stopped or crashed: close those runs and put interrupted jobs
+// back in the approved queue instead of leaving them stuck on "applying".
+function recoverInterrupted(db) {
+  for (const run of db.data.runs) {
+    if (!run.finishedAt) {
+      run.finishedAt = now();
+      run.counts = { ...run.counts, error: 'interrupted (stopped or crashed before finishing)' };
+    }
+  }
+  for (const job of Object.values(db.data.jobs)) {
+    if (job.status === 'applying') {
+      Object.assign(job, { status: 'approved', reason: 'previous apply attempt was interrupted - retrying', updated_at: now() });
+    }
+  }
+}
+
 async function startRun(meta = {}) {
   const db = await getDb();
+  recoverInterrupted(db);
   const run = {
     id: `run-${Date.now()}`,
     startedAt: now(),

@@ -33,7 +33,7 @@ function AnswerForm({ job, onDone }) {
       <button className="primary small" onClick={submit} disabled={saving || !answer.trim()}>
         {saving ? 'Saving…' : 'Save answer & retry next run'}
       </button>
-      {error && <span style={{ color: 'var(--danger)', fontSize: 12 }}>{error}</span>}
+      {error && <span className="field-error" role="alert">{error}</span>}
     </div>
   );
 }
@@ -79,7 +79,7 @@ function SelectorForm({ job, onDone }) {
       <button className="primary small" onClick={submit} disabled={saving || !value.trim()}>
         {saving ? 'Saving…' : 'Patch selector & retry next run'}
       </button>
-      {error && <span style={{ color: 'var(--danger)', fontSize: 12 }}>{error}</span>}
+      {error && <span className="field-error" role="alert">{error}</span>}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef } from 'react';
 
-export default function LogFeed({ lines }) {
+export default function LogFeed({ lines, tall = false }) {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -11,7 +11,7 @@ export default function LogFeed({ lines }) {
   return (
     <div className="card">
       <h2>Activity</h2>
-      <div className="log-feed" ref={ref}>
+      <div className={`log-feed${tall ? ' tall' : ''}`} ref={ref}>
         {lines.length === 0 && <div>Waiting for a run…</div>}
         {lines.map((l, i) => (
           <div key={i} className={l.level === 'error' ? 'err' : ''}>

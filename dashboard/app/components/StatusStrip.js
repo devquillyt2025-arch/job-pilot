@@ -45,7 +45,7 @@ export default function StatusStrip({ running, phase, currentJob, progress, star
             </div>
           </>
         )}
-        <div className="item" style={{ marginLeft: 'auto' }}>
+        <div className="item push">
           Elapsed: <strong>{formatElapsed(startedAt, now)}</strong>
         </div>
       </div>

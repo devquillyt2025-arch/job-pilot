@@ -1,8 +1,19 @@
 {
   "searchQueries": [
     { "keywords": "rpa developer", "location": "bangalore" },
-    { "keywords": "ai engineer", "location": "bangalore" }
+    { "keywords": "uipath developer", "location": "bangalore" },
+    { "keywords": "rpa team lead", "location": "bangalore" },
+    { "keywords": "rpa manager", "location": "bangalore" },
+    { "keywords": "rpa architect", "location": "bangalore" },
+    { "keywords": "ai engineer", "location": "bangalore" },
+    { "keywords": "generative ai engineer", "location": "bangalore" },
+    { "keywords": "ai team lead", "location": "bangalore" },
+    { "keywords": "ai manager", "location": "bangalore" },
+    { "keywords": "ai architect", "location": "bangalore" }
   ],
+  "workModes": ["hybrid", "remote"],
+  "allowedLocations": ["bangalore", "bengaluru", "remote"],
+  "minSalaryLakhs": 10,
   "experienceYears": 3,
   "mustHaveSkills": [
     "Node.js",

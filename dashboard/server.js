@@ -73,7 +73,13 @@ function startRecheck(ids) {
 
 function stopRun() {
   if (!currentChild) return { stopped: false, error: 'No run in progress' };
-  currentChild.kill();
+  if (process.platform === 'win32') {
+    // kill() only ends the node process on Windows, orphaning the Playwright
+    // browser it launched; taskkill /T takes the whole process tree down.
+    spawn('taskkill', ['/PID', String(currentChild.pid), '/T', '/F']);
+  } else {
+    currentChild.kill();
+  }
   return { stopped: true };
 }
 

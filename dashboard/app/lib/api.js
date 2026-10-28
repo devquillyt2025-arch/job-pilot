@@ -20,6 +20,7 @@ export const api = {
     request(`/api/jobs/${id}/resolve-selector`, { method: 'POST', body: JSON.stringify({ path, value }) }),
   stats: () => request('/api/stats'),
   runs: () => request('/api/runs'),
+  profile: () => request('/api/profile'),
   runStatus: () => request('/api/run-status'),
   startRun: () => request('/api/run', { method: 'POST' }),
   startRecheck: (ids) => request('/api/recheck', { method: 'POST', body: JSON.stringify({ ids }) }),
