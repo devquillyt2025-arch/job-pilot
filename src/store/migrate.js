@@ -1,12 +1,12 @@
-// One-time import of the old queue.json/applied.json files into the new
-// lowdb store. Six jobs from the prior run were re-checked live (read-only,
+// One-time import of the old queue.json/applied.json files into the job
+// store. Six jobs from the prior run were re-checked live (read-only,
 // no re-clicking) on 2026-09-08 to get their real outcome, since the old
 // detector's "manual_required"/"unknown" buckets were proven wrong for most
 // of them - see the corrections map below. Anything outside that known set
 // falls back to a generic, conservative mapping.
 const fs = require('fs');
 const { paths } = require('../config');
-const { getDb } = require('./db');
+const { insertJob, close } = require('./db');
 
 // jobId -> verified real status + reason, from live (read-only) inspection.
 const VERIFIED_CORRECTIONS = {
@@ -41,20 +41,16 @@ async function migrate() {
   }
 
   const legacyQueue = JSON.parse(fs.readFileSync(paths.legacyQueue, 'utf8'));
-  const db = await getDb();
-
   let imported = 0;
   let corrected = 0;
 
   for (const [id, item] of Object.entries(legacyQueue)) {
-    if (db.data.jobs[id]) continue; // already migrated
-
     const correction = VERIFIED_CORRECTIONS[id];
     const status = correction ? correction.status : mapLegacyStatus(item.status);
     const reason = correction ? correction.reason : item.notes || null;
     if (correction) corrected++;
 
-    db.data.jobs[id] = {
+    const inserted = await insertJob({
       id,
       url: item.url,
       role: item.title,
@@ -72,19 +68,20 @@ async function migrate() {
       screenshot_path: null,
       created_at: item.foundAt || new Date().toISOString(),
       updated_at: new Date().toISOString(),
-    };
-    imported++;
+    });
+    if (inserted) imported++; // existing ids were already migrated
   }
 
-  await db.write();
   console.log(`Migrated ${imported} job(s) from legacy queue.json (${corrected} corrected using verified live-inspection results).`);
 }
 
 if (require.main === module) {
-  migrate().catch((err) => {
-    console.error('Migration failed:', err);
-    process.exit(1);
-  });
+  migrate()
+    .catch((err) => {
+      console.error('Migration failed:', err);
+      process.exitCode = 1;
+    })
+    .finally(close);
 }
 
 module.exports = { migrate, VERIFIED_CORRECTIONS };

@@ -78,9 +78,14 @@ async function screenshotHandler(req, res, query) {
   sendJson(res, 404, { error: 'not found' });
 }
 
+// Every status the bot or the dashboard can set (same list the job table shows).
+// Anything else would save a job that no page displays.
+const JOB_STATUSES = new Set(['pending', 'approved', 'applying', 'applied', 'skipped_external', 'needs_review', 'rejected', 'failed']);
+
 async function patchJobHandler(req, res, id) {
   const body = await readBody(req);
   if (!body.status) return sendJson(res, 400, { error: 'status is required' });
+  if (!JOB_STATUSES.has(body.status)) return sendJson(res, 400, { error: `unknown status: ${body.status}` });
   const job = await setStatus(id, body.status);
   if (!job) return sendJson(res, 404, { error: 'job not found' });
   sendJson(res, 200, job);
@@ -158,11 +163,11 @@ async function listRunsHandler(req, res) {
 }
 
 async function statsHandler(req, res) {
-  const jobs = await listJobs();
+  // In parallel: each query is a network round-trip to Neon.
+  const [jobs, runs] = await Promise.all([listJobs(), listRuns()]);
   const byStatus = {};
   for (const job of jobs) byStatus[job.status] = (byStatus[job.status] || 0) + 1;
 
-  const runs = await listRuns();
   const trend = runs
     .filter((r) => r.finishedAt && r.counts && r.counts.apply)
     .map((r) => ({
@@ -203,7 +208,8 @@ async function handleApi(req, res) {
     try {
       await route.handler(req, res, match, url.searchParams);
     } catch (err) {
-      sendJson(res, 500, { error: err.message });
+      // A body that isn't valid JSON is the client's mistake, not a server fault.
+      sendJson(res, err instanceof SyntaxError ? 400 : 500, { error: err.message });
     }
     return true;
   }

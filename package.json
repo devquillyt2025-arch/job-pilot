@@ -7,7 +7,8 @@
     "login": "node src/cli/login.js",
     "migrate": "node src/store/migrate.js",
     "run": "node src/runner/run.js",
-    "recheck": "node src/runner/recheck.js"
+    "recheck": "node src/runner/recheck.js",
+    "db:import": "node src/store/import-json.js"
   },
   "keywords": [],
   "author": "",
@@ -16,7 +17,7 @@
   "dependencies": {
     "dotenv": "^17.4.2",
     "fuse.js": "^7.5.0",
-    "lowdb": "^7.0.1",
+    "pg": "^8.23.1",
     "playwright": "^1.63.0",
     "ws": "^8.21.3"
   }

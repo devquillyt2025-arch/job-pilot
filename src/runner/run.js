@@ -3,7 +3,7 @@ const { ensureLoggedIn } = require('../auth/ensureLoggedIn');
 const { searchQuery } = require('../scraper/search');
 const { scoreJob } = require('../matching/scorer');
 const { applyToJob } = require('../apply/applyToJob');
-const { upsertPendingJob, getJob, listJobs, setStatus, startRun, finishRun } = require('../store/db');
+const { upsertPendingJob, getJob, listJobs, setStatus, startRun, finishRun, close: closeDb } = require('../store/db');
 const { profile, settings } = require('../config');
 const { randomDelay } = require('../util/delay');
 
@@ -121,7 +121,17 @@ async function runApplyPhase(context, page, runId) {
 }
 
 (async () => {
-  const runId = await startRun();
+  let runId;
+  try {
+    runId = await startRun();
+  } catch (err) {
+    // Database unreachable (bad DATABASE_URL, Neon down, offline) - report it
+    // as a normal error event instead of an unhandled-rejection stack trace.
+    emit({ type: 'error', message: `database: ${err.message}` });
+    process.exitCode = 1;
+    await closeDb().catch(() => {});
+    return;
+  }
   emit({ type: 'run_started', runId });
 
   let browser;
@@ -141,9 +151,14 @@ async function runApplyPhase(context, page, runId) {
     emit({ type: 'run_finished', runId, search, apply });
   } catch (err) {
     emit({ type: 'error', message: err.message });
-    await finishRun(runId, { error: err.message });
+    // If the error *was* the database, recording it fails too - don't let that
+    // escape as an unhandled rejection.
+    await finishRun(runId, { error: err.message }).catch(() => {});
     process.exitCode = 1;
   } finally {
     if (browser) await browser.close();
+    // The pg pool keeps the event loop alive; the dashboard waits for this
+    // process to exit to know the run is over.
+    await closeDb();
   }
 })();

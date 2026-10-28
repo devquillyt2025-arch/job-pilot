@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
-require('dotenv').config({ quiet: true });
+// Explicit path: the dashboard server runs with cwd = dashboard/, where a bare
+// config() would look for dashboard/.env and never find DATABASE_URL.
+require('dotenv').config({ path: path.join(__dirname, '..', '.env'), quiet: true });
 
 function loadJson(relPath) {
   return JSON.parse(fs.readFileSync(path.join(__dirname, '..', relPath), 'utf8'));
@@ -25,6 +27,7 @@ const credentials = {
 const paths = {
   root: path.join(__dirname, '..'),
   session: path.join(__dirname, '..', 'data', 'session', 'storageState.json'),
+  // legacy JSON store (pre-Neon), read only by `npm run db:import`
   db: path.join(__dirname, '..', 'data', 'autojob.json'),
   logs: path.join(__dirname, '..', 'data', 'logs'),
   selectorMisses: path.join(__dirname, '..', 'data', 'selector-misses'),

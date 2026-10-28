@@ -1,7 +1,7 @@
 const { launchContext, saveSession } = require('../browser');
 const { ensureLoggedIn } = require('../auth/ensureLoggedIn');
 const { recheckJobStatus } = require('../apply/recheckStatus');
-const { listJobs, getJob, updateJob, setStatus } = require('../store/db');
+const { listJobs, getJob, updateJob, setStatus, close: closeDb } = require('../store/db');
 const { settings } = require('../config');
 const { randomDelay } = require('../util/delay');
 
@@ -51,6 +51,11 @@ async function pickTargets(ids) {
   try {
     const targets = await pickTargets(ids);
     emit({ type: 'phase', phase: 'recheck', total: targets.length });
+    if (targets.length === 0) {
+      // Nothing to verify - don't open a browser and log in to Naukri for no reason.
+      emit({ type: 'recheck_finished', counts });
+      return;
+    }
 
     const launched = await launchContext({ visible: false });
     browser = launched.browser;
@@ -109,5 +114,8 @@ async function pickTargets(ids) {
     process.exitCode = 1;
   } finally {
     if (browser) await browser.close();
+    // The pg pool keeps the event loop alive; the dashboard waits for this
+    // process to exit to know the run is over.
+    await closeDb();
   }
 })();
