@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import StatusBadge from './StatusBadge';
 import Icon from './Icon';
 
@@ -32,6 +32,75 @@ function SortHeader({ label, sortKey, activeKey, dir, onSort }) {
   );
 }
 
+const SORT_OPTIONS = [
+  { key: 'updated_at', label: 'Updated' },
+  { key: 'match_score', label: 'Score' },
+  { key: 'company', label: 'Company' },
+  { key: 'role', label: 'Role' },
+  { key: 'location', label: 'Location' },
+  { key: 'status', label: 'Status' },
+];
+
+// List/tiles choice is a per-browser preference shared by every job page.
+// Storage can throw (private mode, blocked site data) - fall back to the list.
+const VIEW_KEY = 'jobpilot.jobView';
+function loadView() {
+  try {
+    return localStorage.getItem(VIEW_KEY) === 'tiles' ? 'tiles' : 'list';
+  } catch {
+    return 'list';
+  }
+}
+function saveView(view) {
+  try {
+    localStorage.setItem(VIEW_KEY, view);
+  } catch {}
+}
+
+function scoreClass(score) {
+  return score >= 75 ? 'high' : score >= 55 ? 'mid' : 'low';
+}
+
+// Opens the drawer on click or Enter/Space, for both table rows and tiles.
+function selectable(job, onSelect) {
+  return {
+    tabIndex: 0,
+    'aria-label': `${job.role} at ${job.company}, open details`,
+    onClick: () => onSelect(job),
+    onKeyDown: (e) => {
+      if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        onSelect(job);
+      }
+    },
+  };
+}
+
+function JobActions({ job, onApprove, onReject, onManualStatus }) {
+  return (
+    <div className="row-actions" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+      <button className="small" onClick={() => window.open(job.url, '_blank', 'noopener,noreferrer')} aria-label={`Open ${job.role} on Naukri`}>
+        Naukri <Icon name="external" size="sm" />
+      </button>
+      {job.status === 'pending' && (
+        <>
+          <button className="small primary" onClick={() => onApprove(job.id)}>
+            Approve
+          </button>
+          <button className="small" onClick={() => onReject(job.id)}>
+            Reject
+          </button>
+        </>
+      )}
+      {(job.status === 'pending' || job.status === 'approved') && (
+        <button className="small" onClick={() => onManualStatus(job.id, 'applied')} title="Already applied by hand outside the bot? Flag it here.">
+          Mark applied
+        </button>
+      )}
+    </div>
+  );
+}
+
 function matchesQuery(job, q) {
   return [job.company, job.role, job.location, job.reason].some((v) => v && v.toLowerCase().includes(q));
 }
@@ -43,6 +112,14 @@ export default function JobTable({ jobs, onSelect, onApprove, onReject, onManual
   const [query, setQuery] = useState('');
   const [sortKey, setSortKey] = useState('updated_at');
   const [sortDir, setSortDir] = useState('desc');
+  // Starts as 'list' on the server render; the saved choice is applied after mount.
+  const [view, setView] = useState('list');
+  useEffect(() => setView(loadView()), []);
+
+  function changeView(next) {
+    setView(next);
+    saveView(next);
+  }
 
   const counts = useMemo(() => {
     const c = {};
@@ -94,21 +171,60 @@ export default function JobTable({ jobs, onSelect, onApprove, onReject, onManual
           )}
         </div>
 
-        {showStatusFilter && jobs.length > 0 && (
-          <div className="filter-pills" role="group" aria-label="Filter by status">
-            <button className={`pill ${statusFilter === 'all' ? 'active' : ''}`} aria-pressed={statusFilter === 'all'} onClick={() => setStatusFilter('all')}>
-              All <span className="pill-count">{jobs.length}</span>
-            </button>
-            {STATUSES.filter((s) => counts[s]).map((s) => (
-              <button
-                key={s}
-                className={`pill ${statusFilter === s ? 'active' : ''}`}
-                aria-pressed={statusFilter === s}
-                onClick={() => setStatusFilter(s)}
-              >
-                {LABELS[s]} <span className="pill-count">{counts[s]}</span>
-              </button>
-            ))}
+        {jobs.length > 0 && (
+          <div className="job-table-controls">
+            {showStatusFilter && (
+              <div className="filter-pills" role="group" aria-label="Filter by status">
+                <button className={`pill ${statusFilter === 'all' ? 'active' : ''}`} aria-pressed={statusFilter === 'all'} onClick={() => setStatusFilter('all')}>
+                  All <span className="pill-count">{jobs.length}</span>
+                </button>
+                {STATUSES.filter((s) => counts[s]).map((s) => (
+                  <button
+                    key={s}
+                    className={`pill ${statusFilter === s ? 'active' : ''}`}
+                    aria-pressed={statusFilter === s}
+                    onClick={() => setStatusFilter(s)}
+                  >
+                    {LABELS[s]} <span className="pill-count">{counts[s]}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="view-bar">
+              {/* Shown in both layouts; in the list it stays in sync with the column headers. */}
+              <div className="sort-select">
+                <label htmlFor="job-sort" className="muted">
+                  Sort by
+                </label>
+                <span className="select-wrap">
+                  <select id="job-sort" value={sortKey} onChange={(e) => setSortKey(e.target.value)}>
+                    {SORT_OPTIONS.map((o) => (
+                      <option key={o.key} value={o.key}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                  <Icon name="chevronDown" size="sm" />
+                </span>
+                <button
+                  type="button"
+                  className="small"
+                  onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
+                  aria-label={sortDir === 'asc' ? 'Ascending, switch to descending' : 'Descending, switch to ascending'}
+                  title={sortDir === 'asc' ? 'Ascending' : 'Descending'}
+                >
+                  <Icon name={sortDir === 'asc' ? 'arrowUp' : 'arrowDown'} size="sm" />
+                </button>
+              </div>
+              <div className="view-toggle" role="group" aria-label="Layout">
+                <button type="button" className={view === 'list' ? 'active' : ''} aria-pressed={view === 'list'} onClick={() => changeView('list')}>
+                  <Icon name="list" size="sm" /> List
+                </button>
+                <button type="button" className={view === 'tiles' ? 'active' : ''} aria-pressed={view === 'tiles'} onClick={() => changeView('tiles')}>
+                  <Icon name="grid" size="sm" /> Tiles
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -127,6 +243,39 @@ export default function JobTable({ jobs, onSelect, onApprove, onReject, onManual
               <p>Nothing matches this search or filter.</p>
             </>
           )}
+        </div>
+      ) : view === 'tiles' ? (
+        <div className="table-scroll">
+          <ul className="job-tiles">
+            {filtered.map((job) => (
+              <li key={job.id} className="job-tile" {...selectable(job, onSelect)}>
+                <div className="job-tile-top">
+                  <div className="job-tile-title">
+                    <strong title={job.role}>{job.role}</strong>
+                    <span title={job.company}>{job.company}</span>
+                  </div>
+                  <span className={`score-pill ${scoreClass(job.match_score)}`} title="Match score">
+                    {job.match_score}
+                  </span>
+                </div>
+                <div className="job-tile-meta">
+                  <StatusBadge status={job.status} />
+                  <span className="muted ellipsis" title={job.location || ''}>
+                    {job.location || '—'}
+                  </span>
+                </div>
+                {job.reason && (
+                  <p className="job-tile-reason" title={job.reason}>
+                    {job.reason}
+                  </p>
+                )}
+                <div className="job-tile-foot">
+                  <span className="muted num">{new Date(job.updated_at).toLocaleString()}</span>
+                  <JobActions job={job} onApprove={onApprove} onReject={onReject} onManualStatus={onManualStatus} />
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       ) : (
         <div className="table-scroll">
@@ -148,19 +297,7 @@ export default function JobTable({ jobs, onSelect, onApprove, onReject, onManual
             </thead>
             <tbody>
               {filtered.map((job, index) => (
-                <tr
-                  key={job.id}
-                  className="clickable"
-                  tabIndex={0}
-                  aria-label={`${job.role} at ${job.company}, open details`}
-                  onClick={() => onSelect(job)}
-                  onKeyDown={(e) => {
-                    if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
-                      e.preventDefault();
-                      onSelect(job);
-                    }
-                  }}
-                >
+                <tr key={job.id} className="clickable" {...selectable(job, onSelect)}>
                   <td className="muted num">{index + 1}</td>
                   <td className="ellipsis" title={job.company}>
                     {job.company}
@@ -172,7 +309,7 @@ export default function JobTable({ jobs, onSelect, onApprove, onReject, onManual
                     {job.location || '—'}
                   </td>
                   <td>
-                    <span className={`score-pill ${job.match_score >= 75 ? 'high' : job.match_score >= 55 ? 'mid' : 'low'}`}>
+                    <span className={`score-pill ${scoreClass(job.match_score)}`}>
                       {job.match_score}
                     </span>
                   </td>
@@ -183,35 +320,8 @@ export default function JobTable({ jobs, onSelect, onApprove, onReject, onManual
                     {job.reason || '—'}
                   </td>
                   <td className="muted num">{new Date(job.updated_at).toLocaleString()}</td>
-                  <td className="actions-col" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
-                    <div className="row-actions">
-                      <button
-                        className="small"
-                        onClick={() => window.open(job.url, '_blank', 'noopener,noreferrer')}
-                        aria-label={`Open ${job.role} on Naukri`}
-                      >
-                        Naukri <Icon name="external" size="sm" />
-                      </button>
-                      {job.status === 'pending' && (
-                        <>
-                          <button className="small primary" onClick={() => onApprove(job.id)}>
-                            Approve
-                          </button>
-                          <button className="small" onClick={() => onReject(job.id)}>
-                            Reject
-                          </button>
-                        </>
-                      )}
-                      {(job.status === 'pending' || job.status === 'approved') && (
-                        <button
-                          className="small"
-                          onClick={() => onManualStatus(job.id, 'applied')}
-                          title="Already applied by hand outside the bot? Flag it here."
-                        >
-                          Mark applied
-                        </button>
-                      )}
-                    </div>
+                  <td className="actions-col">
+                    <JobActions job={job} onApprove={onApprove} onReject={onReject} onManualStatus={onManualStatus} />
                   </td>
                 </tr>
               ))}

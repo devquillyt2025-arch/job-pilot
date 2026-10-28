@@ -725,6 +725,143 @@ tbody tr.clickable:hover td { background: var(--surface-hover); }
 }
 .search-input input[type='search'] { width: 100%; padding-left: 32px; }
 
+/* ------------------------------------------------------ list/tiles view */
+/* Status pills on the left, sort + layout toggle on the right. */
+.job-table-controls {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.job-table-controls .filter-pills { margin-bottom: 0; }
+.view-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+.sort-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+}
+/* Native arrow hidden and replaced with the app's chevron, sized to sit
+   level with the small buttons beside it. */
+.select-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.select-wrap select {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 34px;
+  min-height: 34px;
+  padding: 4px 30px 4px 10px;
+  font-size: 12.5px;
+  font-weight: 500;
+  border-radius: 7px;
+  cursor: pointer;
+}
+.select-wrap select:hover { background: var(--surface-hover); border-color: var(--border-strong); }
+.select-wrap .icon {
+  position: absolute;
+  right: 9px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+/* The open list is drawn by the OS; these colors keep it on-theme where the browser allows. */
+select option { background: var(--surface); color: var(--text); }
+.sort-select button.small { width: 34px; height: 34px; min-height: 34px; padding: 0; }
+.view-toggle {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+.view-toggle button {
+  min-height: 28px;
+  padding: 4px 12px;
+  font-size: 12.5px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+}
+.view-toggle button:hover { background: var(--surface-hover); color: var(--text); }
+.view-toggle button.active {
+  background: var(--primary-soft);
+  color: var(--primary-fg);
+  box-shadow: inset 0 0 0 1px var(--primary-soft-border);
+}
+
+.job-tiles {
+  list-style: none;
+  margin: 0;
+  padding: 2px 0 18px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+.card-fill .job-tiles { padding-top: 14px; }
+.job-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color 0.15s var(--ease), box-shadow 0.15s var(--ease);
+}
+.job-tile:hover { border-color: var(--border-strong); box-shadow: var(--shadow-md); }
+.job-tile:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.job-tile-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.job-tile-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.job-tile-title strong,
+.job-tile-title span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.job-tile-title strong { font-size: 14px; font-weight: 600; color: var(--text); }
+.job-tile-title span { font-size: 13px; color: var(--text-secondary); }
+.job-tile-meta { display: flex; align-items: center; gap: 10px; min-width: 0; font-size: 12.5px; }
+.job-tile-meta .ellipsis { max-width: none; min-width: 0; }
+.job-tile-reason {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.job-tile-foot {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+}
+.job-tile-foot .row-actions { flex-wrap: wrap; }
+
 select, input[type='text'], input[type='search'] {
   font: inherit;
   min-height: 36px;
